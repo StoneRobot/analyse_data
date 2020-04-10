@@ -11,6 +11,7 @@ EnumCommand::EnumCommand()
     Object["可乐罐"] = Json::Value(object::coke);
 
     Target["架子"] = Json::Value(target::shelf);
+    Target["架子第一层"] = Json::Value(target::shelf_first);
     Target["桌子"] = Json::Value(target::table);
 }
 
