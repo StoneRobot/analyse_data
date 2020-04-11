@@ -64,7 +64,7 @@ private:
         if(this->isPub)
         {
             std_msgs::Int32MultiArray enum_command;
-            enum_command.data.resize(3);
+            enum_command.data.resize(3); 
             enum_command.data[0] = cmd.find_intent(intent);
             enum_command.data[1] = cmd.find_object(object);
             enum_command.data[2] = cmd.find_target(target);
@@ -73,7 +73,7 @@ private:
             _n.setParam("/call_bridge/intent", enum_command.data[0]);
             _n.setParam("/call_bridge/target", enum_command.data[2]);
             // 从桌子到货架
-            if(enum_command.data[0] == 1)
+            if(enum_command.data[0] == 0)
                 this->Pose_pub.publish(poses[2]);
             else
                 this->Pose_pub.publish(poses[enum_command.data[1]]);
