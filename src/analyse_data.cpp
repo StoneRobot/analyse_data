@@ -68,11 +68,12 @@ private:
             enum_command.data[0] = cmd.find_intent(intent);
             enum_command.data[1] = cmd.find_object(object);
             enum_command.data[2] = cmd.find_target(target);
-
+            ROS_INFO_STREAM(enum_command.data[0] << " " << enum_command.data[1] << " " << enum_command.data[2]);
+            ROS_INFO_STREAM(poses[enum_command.data[1]]);
             _n.setParam("/call_bridge/intent", enum_command.data[0]);
             _n.setParam("/call_bridge/target", enum_command.data[2]);
             // 从桌子到货架
-            if(enum_command.data[0] == 0)
+            if(enum_command.data[0] == 1)
                 this->Pose_pub.publish(poses[2]);
             else
                 this->Pose_pub.publish(poses[enum_command.data[1]]);
@@ -80,8 +81,9 @@ private:
         }
     }
 
-    void pushPose(hirop_msgs::ObjectArray pose, float position[], float orientation[])
+    void pushPose(hirop_msgs::ObjectArray& pose, float position[], float orientation[])
     {
+        pose.objects.resize(1);
         pose.objects[0].pose.header.frame_id = "base_link";
         pose.objects[0].pose.pose.position.x = position[0];
         pose.objects[0].pose.pose.position.y = position[1];
