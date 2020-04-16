@@ -41,6 +41,24 @@ EnumCommand::EnumCommand()
     Target["架子"] = Json::Value("shelf");
     Target["架子第一层"] = Json::Value("shelf_first");
     Target["桌子"] = Json::Value("table");
+    hirop_msgs::ObjectArray pose;
+    initPose(pose, 0.418, -0.65, 0.66, 0, 0, -0.706825, 0.707388);
+    poses.push_back(pose);
+    initPose(pose, 0.418, -0.65, 0.38, 0, 0, -0.706825, 0.707388);
+    poses.push_back(pose);
+}
+
+void EnumCommand::initPose(hirop_msgs::ObjectArray& pose, float x, float y, float z, float qx, float qy, float qz, float qw)
+{
+    pose.objects.resize(1);
+    pose.objects[0].pose.header.frame_id = "base_link";
+    pose.objects[0].pose.pose.position.x = x;
+    pose.objects[0].pose.pose.position.y = y;
+    pose.objects[0].pose.pose.position.z = z;
+    pose.objects[0].pose.pose.orientation.x = qx;
+    pose.objects[0].pose.pose.orientation.y = qy;
+    pose.objects[0].pose.pose.orientation.z = qz;
+    pose.objects[0].pose.pose.orientation.w = qw;
 }
 
 std::string EnumCommand::find_intent(std::string str)
