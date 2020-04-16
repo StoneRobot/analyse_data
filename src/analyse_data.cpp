@@ -42,6 +42,7 @@ void subCallback(const std_msgs::String::ConstPtr& msg)
         Intent = cmd.find_intent(intent);
         Object = cmd.find_object(object);
         Target = cmd.find_target(target);
+        ROS_INFO_STREAM("Object: " << Object);
     }
 }
 
@@ -49,6 +50,8 @@ int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "analyse_data_bridge");
     ros::NodeHandle nh;
+    ros::AsyncSpinner spinner(2);
+    spinner.start();
     ros::Subscriber sub = nh.subscribe("/user_intent", 1, subCallback);
     ros::ServiceClient detection_client = nh.serviceClient<hirop_msgs::detection>("detection");
     ros::Publisher Object_pub = nh.advertise<hirop_msgs::ObjectArray>("object_array", 1);
@@ -57,9 +60,11 @@ int main(int argc, char *argv[])
     
     while (ros::ok())
     {
-        ros::spinOnce();
+        // ros::spinOnce();
+        // ROS_INFO("spin once");
         if(IsAction == true)
         {
+            
             IsAction = false;
             bool isUseDetection = true;
             move_group.setJointValueTarget(joint_group_positions);
@@ -68,6 +73,7 @@ int main(int argc, char *argv[])
             // 调试使用
             if(isUseDetection)
             {
+                ROS_INFO("UseDetection");
                 hirop_msgs::detection det_srv;
                 det_srv.request.objectName = Object;
                 det_srv.request.detectorName = "";
@@ -86,10 +92,12 @@ int main(int argc, char *argv[])
             {
                 if(Object == "coke")
                 {
+                    ROS_INFO("to shelf top");
                     Object_pub.publish(cmd.getObjectArray(0));
                 }
                 else if(Object == "milk")
                 {
+                    ROS_INFO("to shelf end");
                      Object_pub.publish(cmd.getObjectArray(1));
                 }
             }
