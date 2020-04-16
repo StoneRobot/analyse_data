@@ -25,16 +25,18 @@ void subCallback(const std_msgs::String::ConstPtr& msg)
     std::string intent = j_data["intent"].asString();
     std::string object = ((j_data["slots"])[0])["normValue"].asString();
     std::string target = ((j_data["slots"])[1])["normValue"].asString();
+
     if(intent == "begin")
     {
         isPub = true; 
-    return;
+        return;
     }
     else if(intent == "stop")
     {
         isPub = false;
+        return;
     }
-    if(isPub)
+    else if(isPub)
     {
         IsAction = true;
         Intent = cmd.find_intent(intent);
