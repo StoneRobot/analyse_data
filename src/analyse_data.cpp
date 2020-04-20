@@ -6,7 +6,7 @@
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-
+#include <moveit_msgs/MoveItErrorCodes.h>
 #include "analyse_data/enum_cmd.h"
 
 #include "hirop_msgs/detection.h"
@@ -88,16 +88,22 @@ int main(int argc, char *argv[])
     {
         // ros::spinOnce();
         // ROS_INFO("spin once");
-        if(IsAction == true)
+        if(IsAction == false)
         {
-            // ROS_INFO("Press 'enter' to continue");
-            // std::cin.ignore();
+            ROS_INFO("Press 'enter' to continue");
+            std::cin.ignore();
+            Object = "milk";
             IsAction = false;
             bool isUseDetection = true;
             move_group.setJointValueTarget(joint_group_positions1);
             bool succeed = (move_group.plan(my_plan) == moveit_msgs::MoveItErrorCodes::SUCCESS);
+            moveit_msgs::MoveItErrorCodes codes;
             if(succeed)
-                move_group.move();
+            do
+            {
+                codes = move_group.move();
+            }
+            while (codes.val !=  moveit_msgs::MoveItErrorCodes::SUCCESS);
             nh.getParam("is_use_detection", isUseDetection);
             // 调试使用
             if(isUseDetection)
