@@ -4,6 +4,8 @@
 #include <string.h>
 #include <vector>
 #include <moveit/move_group_interface/move_group_interface.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include "analyse_data/enum_cmd.h"
 
@@ -46,6 +48,22 @@ void subCallback(const std_msgs::String::ConstPtr& msg)
     }
 }
 
+void angle2rad(std::vector<double>& angle)
+{
+    int i = 0;
+    for(i; i < angle.size(); ++i)
+    {
+        angle[i] = (angle[i]/180)*3.1415926;
+        std::cout << angle[i] << " ";
+    }
+    std::cout << std::endl;
+}
+
+// void callDetection(ros:ServiceClient& client)
+// {
+    
+// }
+
 int main(int argc, char *argv[])
 {
     ros::init(argc, argv, "analyse_data_bridge");
@@ -56,7 +74,15 @@ int main(int argc, char *argv[])
     ros::ServiceClient detection_client = nh.serviceClient<hirop_msgs::detection>("detection");
     ros::Publisher Object_pub = nh.advertise<hirop_msgs::ObjectArray>("object_array", 1);
     moveit::planning_interface::MoveGroupInterface move_group("arm");
-    std::vector<double> joint_group_positions={8.120842, -86.482752, 152.566045, -72.321156, 103.847033, -32.369842};
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    std::vector<double> joint_group_positions1={4.2982, -96.465, 174.814, -69.8859, 92.1213, -20.163};
+    std::vector<double> joint_group_positions2={4.296766, -93.700937, 205.049758, -71.801747, 81.01799, 11.016716};
+    angle2rad(joint_group_positions1);
+    angle2rad(joint_group_positions2);
+    
+    
+    move_group.setNamedTarget("home");
+    move_group.move();
     
     while (ros::ok())
     {
@@ -64,19 +90,23 @@ int main(int argc, char *argv[])
         // ROS_INFO("spin once");
         if(IsAction == true)
         {
-            
+            // ROS_INFO("Press 'enter' to continue");
+            // std::cin.ignore();
             IsAction = false;
             bool isUseDetection = true;
-            move_group.setJointValueTarget(joint_group_positions);
-            move_group.move();
+            move_group.setJointValueTarget(joint_group_positions1);
+            bool succeed = (move_group.plan(my_plan) == moveit_msgs::MoveItErrorCodes::SUCCESS);
+            if(succeed)
+                move_group.move();
             nh.getParam("is_use_detection", isUseDetection);
             // 调试使用
             if(isUseDetection)
             {
+                ROS_INFO("call detection");
                 ROS_INFO("UseDetection");
                 hirop_msgs::detection det_srv;
                 det_srv.request.objectName = Object;
-                det_srv.request.detectorName = "";
+                det_srv.request.detectorName = "Yolo6d";
                 det_srv.request.detectorType = 1;
                 det_srv.request.detectorConfig = "";
                 if(detection_client.call(det_srv))
