@@ -7,6 +7,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <moveit_msgs/MoveItErrorCodes.h>
+#include <stdlib.h>
 #include "analyse_data/enum_cmd.h"
 
 #include "hirop_msgs/detection.h"
@@ -59,10 +60,38 @@ void angle2rad(std::vector<double>& angle)
     std::cout << std::endl;
 }
 
-// void callDetection(ros:ServiceClient& client)
-// {
-    
-// }
+void addCollision(bool  b)
+{
+    if(b == true)
+    {
+        system("rosservice call /clear_octomap");
+        system("rosservice call /clean_pcl");
+        system("rosservice call /look");
+        // system("rosservice call /add_collision");
+        ros::WallDuration(1.0).sleep();
+    }
+}
+
+void go(const std::vector<double>& Value, moveit::planning_interface::MoveGroupInterface& move_group)
+{
+    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    move_group.setJointValueTarget(Value);
+    bool success;
+    for(int i=0; i<5; ++i)
+    {
+        success = (move_group.plan(my_plan) == moveit_msgs::MoveItErrorCodes::SUCCESS);
+        if(success)
+            break;
+    }
+    moveit_msgs::MoveItErrorCodes codes;
+    if(success)
+    do
+    {
+        codes = move_group.move();
+    }
+    while (codes.val !=  moveit_msgs::MoveItErrorCodes::SUCCESS);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -74,7 +103,7 @@ int main(int argc, char *argv[])
     ros::ServiceClient detection_client = nh.serviceClient<hirop_msgs::detection>("detection");
     ros::Publisher Object_pub = nh.advertise<hirop_msgs::ObjectArray>("object_array", 1);
     moveit::planning_interface::MoveGroupInterface move_group("arm");
-    moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+    
     std::vector<double> joint_group_positions1={4.2982, -96.465, 174.814, -69.8859, 92.1213, -20.163};
     std::vector<double> joint_group_positions2={4.296766, -93.700937, 205.049758, -71.801747, 81.01799, 11.016716};
     angle2rad(joint_group_positions1);
@@ -84,26 +113,24 @@ int main(int argc, char *argv[])
     move_group.setNamedTarget("home");
     move_group.move();
     
+    bool add_collision = true;
+
     while (ros::ok())
     {
         // ros::spinOnce();
         // ROS_INFO("spin once");
         if(IsAction == false)
         {
+            IsAction = false;
+            // test
             ROS_INFO("Press 'enter' to continue");
             std::cin.ignore();
-            Object = "milk";
-            IsAction = false;
+            nh.getParam("object", Object);
+            
+            nh.getParam("add_collision", add_collision);
+            addCollision(add_collision);
+            go(joint_group_positions1, move_group);
             bool isUseDetection = true;
-            move_group.setJointValueTarget(joint_group_positions1);
-            bool succeed = (move_group.plan(my_plan) == moveit_msgs::MoveItErrorCodes::SUCCESS);
-            moveit_msgs::MoveItErrorCodes codes;
-            if(succeed)
-            do
-            {
-                codes = move_group.move();
-            }
-            while (codes.val !=  moveit_msgs::MoveItErrorCodes::SUCCESS);
             nh.getParam("is_use_detection", isUseDetection);
             // 调试使用
             if(isUseDetection)
