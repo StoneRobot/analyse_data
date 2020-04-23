@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
     <param name="add_collision" type="bool" value="true" />
-    <param name=="object" type="str" value="cola" />
+    <param name="object" type="str" value="milk" />
     <node pkg="analyse_data" type="analyse_data" name="analyse_data" output="screen" />
 </launch>

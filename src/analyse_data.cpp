@@ -60,7 +60,7 @@ void angle2rad(std::vector<double>& angle)
     std::cout << std::endl;
 }
 
-void addCollision(bool  b)
+void addPointCloud(bool  b)
 {
     if(b == true)
     {
@@ -89,9 +89,37 @@ void go(const std::vector<double>& Value, moveit::planning_interface::MoveGroupI
     {
         codes = move_group.move();
     }
-    while (codes.val !=  moveit_msgs::MoveItErrorCodes::SUCCESS);
+    while (codes.val !=  moveit_msgs::MoveItErrorCodes::SUCCESS && ros::ok());
 }
 
+void detectionObject(ros::ServiceClient& client, moveit::planning_interface::MoveGroupInterface& move_group, ros::NodeHandle nh)
+{
+    bool is_back_home = true;
+    nh.setParam("/is_back_home", true);
+    nh.getParam("/object", Object);
+    ROS_INFO("call detection");
+    ROS_INFO("UseDetection");
+    hirop_msgs::detection det_srv;
+    det_srv.request.objectName = Object;
+    det_srv.request.detectorName = "Yolo6d";
+    det_srv.request.detectorType = 1;
+    det_srv.request.detectorConfig = "";
+    if(client.call(det_srv))
+    {
+        ROS_INFO_STREAM("detection result is " << det_srv.response.result);
+        ros::WallDuration(2.0).sleep();
+        nh.getParam("/is_back_home", is_back_home);
+        if(is_back_home)
+        {
+            // move_group.setNamedTarget("home");
+            // move_group.move();
+        }
+    }
+    else
+    {
+        ROS_INFO("check detection service!!");
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -104,52 +132,53 @@ int main(int argc, char *argv[])
     ros::Publisher Object_pub = nh.advertise<hirop_msgs::ObjectArray>("object_array", 1);
     moveit::planning_interface::MoveGroupInterface move_group("arm");
     
-    std::vector<double> joint_group_positions1={4.2982, -96.465, 174.814, -69.8859, 92.1213, -20.163};
-    std::vector<double> joint_group_positions2={4.296766, -93.700937, 205.049758, -71.801747, 81.01799, 11.016716};
+    std::vector<double> joint_group_positions0={4.2982, -96.465, 174.814, -69.8859, 92.1213, -20.163};
+    std::vector<double> joint_group_positions1={4.296766, -93.700937, 205.049758, -71.801747, 81.01799, 11.016716};
+    angle2rad(joint_group_positions0);
     angle2rad(joint_group_positions1);
-    angle2rad(joint_group_positions2);
     
-    
+    ROS_INFO("Press 'enter' to continue before set_robot_enable...");
+    std::cin.ignore();
     move_group.setNamedTarget("home");
     move_group.move();
     
     bool add_collision = true;
+    bool isDetectionSucceed =true;
 
     while (ros::ok())
     {
         // ros::spinOnce();
         // ROS_INFO("spin once");
+        bool over;
+        nh.getParam("/over", over);
+        if(over == true)
         if(IsAction == false)
         {
+            nh.setParam("/over", false);
             IsAction = false;
-            // test
-            ROS_INFO("Press 'enter' to continue");
-            std::cin.ignore();
-            nh.getParam("object", Object);
-            
-            nh.getParam("add_collision", add_collision);
-            addCollision(add_collision);
-            go(joint_group_positions1, move_group);
             bool isUseDetection = true;
+            
+            // test
+            // ROS_INFO("Press 'enter' to continue");
+            // std::cin.ignore();
+
+            nh.getParam("is_back_home", isDetectionSucceed);
+            nh.getParam("add_collision", add_collision);
+            // 当false时，表示上一次抓取过程完成，整个过程要重新开始
+            if(isDetectionSucceed == false)
+                addPointCloud(add_collision);
+            // 识别的位置
+            int seat;
+            nh.getParam("/seat", seat);
+            if(seat == 0)
+                go(joint_group_positions0, move_group);
+            if(seat == 1)
+                go(joint_group_positions1, move_group);
             nh.getParam("is_use_detection", isUseDetection);
             // 调试使用
             if(isUseDetection)
             {
-                ROS_INFO("call detection");
-                ROS_INFO("UseDetection");
-                hirop_msgs::detection det_srv;
-                det_srv.request.objectName = Object;
-                det_srv.request.detectorName = "Yolo6d";
-                det_srv.request.detectorType = 1;
-                det_srv.request.detectorConfig = "";
-                if(detection_client.call(det_srv))
-                {
-                    ROS_INFO_STREAM("detection result is " << det_srv.response.result);
-                }
-                else
-                {
-                    ROS_INFO("check detection service!!");
-                }
+                detectionObject(detection_client, move_group, nh);
             }
             else
             {
@@ -165,6 +194,7 @@ int main(int argc, char *argv[])
                 }
             }
         }
+        ros::WallDuration(1.0).sleep();
     }
     return 0;
 }
