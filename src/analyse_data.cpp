@@ -7,16 +7,20 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <moveit_msgs/MoveItErrorCodes.h>
+#include <std_msgs/Bool.h>
 #include <stdlib.h>
 #include "analyse_data/enum_cmd.h"
 
 #include "hirop_msgs/detection.h"
+
 
 std::string Intent;
 std::string Object;
 std::string Target;
 bool IsAction = false;
 EnumCommand cmd;
+
+ros::Publisher switch_pub;
 
 void subCallback(const std_msgs::String::ConstPtr& msg)
 {
@@ -64,10 +68,18 @@ void addPointCloud(bool  b)
 {
     if(b == true)
     {
+        // system("rostopic pub /switch_of_detect std_msgs/Bool 'data: true'");
+        std_msgs::Bool switch_msg;
+        switch_msg.data = true;
+        switch_pub.publish(switch_msg);
+        ros::WallDuration(2.0).sleep();
         system("rosservice call /clear_octomap");
         system("rosservice call /clean_pcl");
         system("rosservice call /look");
-        // system("rosservice call /add_collision");
+        ros::WallDuration(2.0).sleep();
+        // system("rostopic pub /switch_of_detect std_msgs/Bool 'data: false'");
+        switch_msg.data = false;
+        switch_pub.publish(switch_msg);
         ros::WallDuration(1.0).sleep();
     }
 }
@@ -130,6 +142,7 @@ int main(int argc, char *argv[])
     ros::Subscriber sub = nh.subscribe("/user_intent", 1, subCallback);
     ros::ServiceClient detection_client = nh.serviceClient<hirop_msgs::detection>("detection");
     ros::Publisher Object_pub = nh.advertise<hirop_msgs::ObjectArray>("object_array", 1);
+    switch_pub = nh.advertise<std_msgs::Bool>("switch_of_detect", 1);
     moveit::planning_interface::MoveGroupInterface move_group("arm");
     
     std::vector<double> joint_group_positions0={4.2982, -96.465, 174.814, -69.8859, 92.1213, -20.163};
