@@ -42,9 +42,11 @@ EnumCommand::EnumCommand()
     Target["架子第一层"] = Json::Value("shelf_first");
     Target["桌子"] = Json::Value("table");
     hirop_msgs::ObjectArray pose;
-    initPose(pose, 0.418, -0.65, 0.66, 0, 0, -0.706825, 0.707388);
+    // initPose(pose, 0.418, -0.65, 0.66, 0, 0, -0.706825, 0.707388);
+    initPose(pose, 0.418, -0.80, 0.66, 0, 0, -0.706825, 0.707388);
     poses.push_back(pose);
-    initPose(pose, 0.418, -0.65, 0.38, 0, 0, -0.706825, 0.707388);
+    // initPose(pose, 0.418, -0.65, 0.38, 0, 0, -0.706825, 0.707388);
+    initPose(pose, 0.418, -0.80, 0.38, 0, 0, -0.706825, 0.707388);
     poses.push_back(pose);
 }
 

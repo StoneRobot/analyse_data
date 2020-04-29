@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
             }
             else
             {
+                nh.getParam("/object", Object);
                 if(Object == "coke")
                 {
                     ROS_INFO("to shelf top");
